@@ -1,0 +1,145 @@
+{
+  "purpose": "Actual IMF responses; offline test evidence, not an app fallback.",
+  "requests": [
+    {
+      "name": "2024_q1_cpi",
+      "url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/CPI/+/GBR+USA+G163.CPI._T.IX.M?c%5BTIME_PERIOD%5D=ge%3A2024-01%2Ble%3A2024-03",
+      "status": 200,
+      "content_type": "text/csv",
+      "retrieved_at_utc": "2026-10-19T22:45:06.018956+00:00",
+      "coverage": {
+        "GBR": {
+          "first": "2024-01",
+          "last": "2024-03",
+          "observations": 3
+        },
+        "USA": {
+          "first": "2024-01",
+          "last": "2024-03",
+          "observations": 3
+        }
+      },
+      "structures": [
+        "IMF.STA:CPI(5.0.0)"
+      ]
+    },
+    {
+      "name": "2024_q1_fx",
+      "url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/ER/+/GBR+USA+G163.XDC_USD.PA_RT.M?c%5BTIME_PERIOD%5D=ge%3A2024-01%2Ble%3A2024-03",
+      "status": 200,
+      "content_type": "text/csv",
+      "retrieved_at_utc": "2026-10-19T22:45:06.813435+00:00",
+      "coverage": {
+        "GBR": {
+          "first": "2024-01",
+          "last": "2024-03",
+          "observations": 3
+        },
+        "USA": {
+          "first": "2024-01",
+          "last": "2024-03",
+          "observations": 3
+        },
+        "G163": {
+          "first": "2024-01",
+          "last": "2024-03",
+          "observations": 3
+        }
+      },
+      "structures": [
+        "IMF.STA:ER(4.0.1)"
+      ]
+    },
+    {
+      "name": "2024_q1_hicp",
+      "url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/CPI/+/G163.HICP._T.IX.M?c%5BTIME_PERIOD%5D=ge%3A2024-01%2Ble%3A2024-03",
+      "status": 200,
+      "content_type": "text/csv",
+      "retrieved_at_utc": "2026-10-19T22:45:05.966815+00:00",
+      "coverage": {
+        "G163": {
+          "first": "2024-01",
+          "last": "2024-03",
+          "observations": 3
+        }
+      },
+      "structures": [
+        "IMF.STA:CPI(5.0.0)"
+      ]
+    },
+    {
+      "name": "countries",
+      "url": "https://api.imf.org/external/sdmx/3.0/structure/codelist/IMF/CL_COUNTRY/+",
+      "status": 200,
+      "content_type": "application/vnd.sdmx.structure+json;version=2.0.0",
+      "retrieved_at_utc": "2026-10-19T22:45:06.891252+00:00",
+      "code_count": 343
+    },
+    {
+      "name": "coverage_cpi",
+      "url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/CPI/+/GBR+USA+G163.CPI._T.IX.M?c%5BTIME_PERIOD%5D=ge%3A1976-01",
+      "status": 200,
+      "content_type": "text/csv",
+      "retrieved_at_utc": "2026-10-19T22:45:06.036823+00:00",
+      "coverage": {
+        "GBR": {
+          "first": "1976-01",
+          "last": "2026-08",
+          "observations": 608
+        },
+        "USA": {
+          "first": "1976-01",
+          "last": "2026-09",
+          "observations": 608
+        }
+      },
+      "structures": [
+        "IMF.STA:CPI(5.0.0)"
+      ]
+    },
+    {
+      "name": "coverage_fx",
+      "url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/ER/+/GBR+USA+G163.XDC_USD.PA_RT.M?c%5BTIME_PERIOD%5D=ge%3A1976-01",
+      "status": 200,
+      "content_type": "text/csv",
+      "retrieved_at_utc": "2026-10-19T22:45:06.913317+00:00",
+      "coverage": {
+        "GBR": {
+          "first": "1976-01",
+          "last": "2026-08",
+          "observations": 608
+        },
+        "USA": {
+          "first": "1976-01",
+          "last": "2026-09",
+          "observations": 609
+        },
+        "G163": {
+          "first": "1999-01",
+          "last": "2026-08",
+          "observations": 332
+        }
+      },
+      "structures": [
+        "IMF.STA:ER(4.0.1)"
+      ]
+    },
+    {
+      "name": "coverage_hicp",
+      "url": "https://api.imf.org/external/sdmx/3.0/data/dataflow/IMF.STA/CPI/+/G163.HICP._T.IX.M?c%5BTIME_PERIOD%5D=ge%3A1976-01",
+      "status": 200,
+      "content_type": "text/csv",
+      "retrieved_at_utc": "2026-10-19T22:45:06.017214+00:00",
+      "coverage": {
+        "G163": {
+          "first": "1999-12",
+          "last": "2026-09",
+          "observations": 322
+        }
+      },
+      "structures": [
+        "IMF.STA:CPI(5.0.0)"
+      ]
+    }
+  ]
+}

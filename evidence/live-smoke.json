@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-19",
+  "python": "3.12.15",
+  "actual_live_imf_requests": true,
+  "country_1": "GBR",
+  "country_2": "USA",
+  "sample_start": "2024-01",
+  "sample_end": "2024-03",
+  "metrics": [
+    {
+      "label": "Sample mean RER*",
+      "value": "1.1654"
+    },
+    {
+      "label": "Valid real observations",
+      "value": "3 / 3"
+    },
+    {
+      "label": "Real index average",
+      "value": "100.00"
+    }
+  ],
+  "chart_modes": [
+    "Real",
+    "Nominal",
+    "Both"
+  ],
+  "streamlit_health_status": 200,
+  "visual_browser_review": "Unavailable: browser inventory empty",
+  "public_deployment": "Pending"
+}
