@@ -6,6 +6,10 @@ Date: 2026-10-19. Environment: Python 3.12.15, Streamlit 1.66.0, Plotly 6.9.0, p
 
 The production adapter also retrieved live IMF country metadata and all six UK/U.S./Euro area price and FX series. It returned 266 country choices and the coverage described in plan.md. The January-March 2024 UK/U.S. real indices averaged 100.
 
+The complete Streamlit app was additionally exercised against live IMF data, including its date controls and all three chart modes. The local server's health endpoint returned HTTP 200. See [live-smoke.json](../../evidence/live-smoke.json).
+
+The public GitHub repository was created and pushed to main: https://github.com/greg-at-k/salamanca. Public visibility and the default branch were verified through GitHub CLI.
+
 | Check | Evidence / status |
 | --- | --- |
 | A01: currency direction | Live adapter and Decimal fixture check verify USD per GBP |

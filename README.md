@@ -8,7 +8,7 @@ Named after the School of Salamanca, whose sixteenth-century scholars and theolo
 
 Implemented; 22 automated calculation, parsing, transport, chart, and Streamlit interaction checks pass with Python 3.12.15. Live IMF downloads were verified on 2026-10-19. Public Streamlit deployment and visual browser review remain pending.
 
-The repository name is `salamanca`, replacing the assignment's example name.
+Public repository: [greg-at-k/salamanca](https://github.com/greg-at-k/salamanca), branch `main`. The name replaces the assignment's example name.
 
 ## Use without installing Python locally
 

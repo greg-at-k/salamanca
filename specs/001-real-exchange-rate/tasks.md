@@ -14,6 +14,7 @@ Check items only when the corresponding work has been completed and verified.
 - [x] Save one independently reproduced live-data RER calculation and CSV.
 - [x] Update README with use, deployment, methodology, and validation instructions.
 - [x] Review implementation against the specification and record results.
-- [ ] Publish the public GitHub repository and deploy with Streamlit Python 3.12.
+- [x] Publish the public GitHub repository: https://github.com/greg-at-k/salamanca (main).
+- [ ] Deploy with Streamlit Python 3.12. Requires dashboard access; no browser surface is available in this session.
 - [ ] Verify the deployed application and add its public URLs to submission evidence.
 - [ ] User performs final manual verification and retains prompt/model/date evidence.
