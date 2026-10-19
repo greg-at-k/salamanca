@@ -1,0 +1,23 @@
+{
+  "date": "2026-10-19",
+  "python": "3.12.15",
+  "actual_live_imf_requests": true,
+  "country_choices": 260,
+  "removed_regional_code": "EUR (Europe)",
+  "country_1": "G163",
+  "country_2": "USA",
+  "nominal_units": "USD per EUR",
+  "sample_start": "1999-12",
+  "sample_end": "2026-08",
+  "months": 321,
+  "valid_real_months": 320,
+  "mean_real_index": 100.00000000000001,
+  "chart_modes": [
+    "Real",
+    "Nominal",
+    "Both"
+  ],
+  "initial_series_download": "Only after Load comparison",
+  "visual_browser_review": "Unavailable: browser inventory empty",
+  "reported_user_failure": "Not reproduced for actual G163/USA; misleading EUR region removed"
+}

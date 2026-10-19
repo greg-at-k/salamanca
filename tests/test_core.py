@@ -148,15 +148,63 @@ class ParserTests(unittest.TestCase):
             self.assertEqual(records["2024-01"]["raw_obs"], value)
 
     def test_country_filter_includes_euro_excludes_groups(self):
-        codes = ["GBR", "USA", "G163", "G001", "ESP", "XKX"]
+        codes = ["GBR", "USA", "G163", "G001", "ESP", "XKX", "EUR", "AFR", "APD", "WHD", "MCD", "SDS"]
         payload = {"data": {"codelists": [{"id": "CL_COUNTRY", "codes": [
             {"id": code, "names": {"en": code}} for code in codes]}]}}
         countries = app.parse_countries(payload)
         self.assertIn("G163", countries)
         self.assertIn("XKX", countries)
         self.assertNotIn("G001", countries)
+        for region in app.REGIONAL_CODES:
+            self.assertNotIn(region, countries)
         with self.assertRaises(app.DataError):
             app.parse_countries({"data": {}})
+
+
+class SampleWindowTests(unittest.TestCase):
+    def history(self, start="1976-01", end="2026-08"):
+        inputs = synthetic_inputs()
+        for series in inputs.values():
+            series["records"] = {m: {"value": 1.0} for m in app.month_range(start, end)}
+        return inputs
+
+    def test_thirty_year_calendar_cap_ends_at_latest_shared_month(self):
+        inputs = self.history()
+        inputs["cpi_2"]["records"]["2026-09"] = {"value": 1}
+        start, end, basis = app.sample_window(inputs, list(app.WINDOWS)[0], "", "", "2026-10")
+        self.assertEqual((start, end), ("1996-09", "2026-08"))
+        self.assertEqual(len(app.month_range(start, end)), 360)
+        self.assertIn("shared real", basis)
+
+    def test_shorter_euro_history_starts_at_shared_coverage(self):
+        inputs = self.history("1999-12")
+        inputs["fx_1"]["records"].update({m: {"value": 1} for m in app.month_range("1999-01", "1999-11")})
+        start, end, _ = app.sample_window(inputs, list(app.WINDOWS)[0], "", "", "2026-10")
+        self.assertEqual((start, end), ("1999-12", "2026-08"))
+
+    def test_presets_full_history_and_gaps(self):
+        inputs = self.history()
+        for series in inputs.values():
+            series["records"].pop("2024-01")
+        for window, count in (("Last 10 years", 120), ("Last 5 years", 60)):
+            start, end, _ = app.sample_window(inputs, window, "", "", "2026-10")
+            self.assertEqual(len(app.month_range(start, end)), count)
+        start, end, _ = app.sample_window(inputs, "Full available history", "", "", "2026-10")
+        self.assertEqual((start, end), ("1976-01", "2026-08"))
+
+    def test_no_cpi_falls_back_to_shared_nominal_coverage(self):
+        inputs = self.history()
+        inputs["cpi_1"]["records"] = {}
+        start, end, basis = app.sample_window(inputs, list(app.WINDOWS)[0], "", "", "2026-10")
+        self.assertEqual((start, end), ("1996-09", "2026-08"))
+        self.assertIn("shared nominal", basis)
+
+    def test_custom_dates_are_exact_and_validate_before_download(self):
+        self.assertEqual(app.sample_window({}, "Custom dates", "1980-01", "2024-03", "2026-10")[:2],
+                         ("1980-01", "2024-03"))
+        for start, end in (("2024-03", "2024-01"), ("1975-12", "2024-01"), ("2026-10", "2026-11")):
+            with self.assertRaises(app.DataError):
+                app.sample_window({}, "Custom dates", start, end, "2026-10")
 
 
 class TransportTests(unittest.TestCase):

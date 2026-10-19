@@ -20,6 +20,11 @@ from urllib3.util.retry import Retry
 BASE = "https://api.imf.org/external/sdmx/3.0"
 FIRST_MONTH = "1976-01"
 COLORS = {"real": "#18766b", "nominal": "#b76e36"}
+# Three-letter regional codes observed in IMF CL_COUNTRY are not countries.
+REGIONAL_CODES = frozenset({"AFR", "APD", "EUR", "MCD", "WHD", "SDS"})
+WINDOWS = {"Up to 30 years (recommended)": 360, "Last 10 years": 120,
+           "Last 5 years": 60, "Full available history": None, "Custom dates": "custom"}
+MONTH_NAMES = ("Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec")
 
 
 class DataError(ValueError):
@@ -90,7 +95,8 @@ def parse_countries(payload):
         lists = payload["data"]["codelists"]
         countries = {c["id"]: c.get("names", {}).get("en") or c.get("name") or c["id"]
                      for item in lists if item["id"] == "CL_COUNTRY" for c in item["codes"]
-                     if re.fullmatch(r"[A-Z]{3}", c["id"]) or c["id"] == "G163"}
+                     if (re.fullmatch(r"[A-Z]{3}", c["id"]) and c["id"] not in REGIONAL_CODES)
+                     or c["id"] == "G163"}
     except (KeyError, TypeError, AttributeError) as exc:
         raise DataError("IMF country metadata has an unexpected structure.") from exc
     if not {"GBR", "USA", "G163"}.issubset(countries):
@@ -173,6 +179,49 @@ def fetch_series(code, kind):
 def currency_label(code):
     # The country codelist has no time-specific currency map. Do not guess one.
     return {"GBR": "GBP", "USA": "USD", "G163": "EUR"}.get(code, f"{code} domestic currency")
+
+
+def country_label(code, countries):
+    return "Euro area (euro / EUR)" if code == "G163" else countries[code]
+
+
+def sample_window(inputs, window, custom_start, custom_end, current_month):
+    """Choose an inclusive calendar window, preferring complete shared inputs."""
+    if window not in WINDOWS:
+        raise DataError("Choose a supported sample window.")
+    if WINDOWS[window] == "custom":
+        start, end = month_label(custom_start), month_label(custom_end)
+        month_range(start, end)
+        if end > current_month:
+            raise DataError("The end month cannot be later than the current month.")
+        return start, end, "Custom dates"
+    valid = {label: {m for m, r in series["records"].items()
+                     if FIRST_MONTH <= m <= current_month and positive(r["value"])}
+             for label, series in inputs.items()}
+    shared = set.intersection(*valid.values())
+    nominal = valid["fx_1"] & valid["fx_2"]
+    available = set.union(*valid.values())
+    coverage = shared or nominal or available or {current_month}
+    basis = ("shared real-data coverage" if shared else "shared nominal-data coverage" if nominal
+             else "available source coverage" if available else "no source observations")
+    first, end = min(coverage), max(coverage)
+    months = month_range(FIRST_MONTH, end)
+    cap = WINDOWS[window]
+    start = max(first, months[max(0, len(months) - cap)]) if cap is not None else first
+    return start, end, f"{window} · {basis}"
+
+
+def load_comparison(request, countries, fetcher, current_month):
+    code1, code2 = request["country_1"], request["country_2"]
+    country1 = {"code": code1, "name": countries[code1]}
+    country2 = {"code": code2, "name": countries[code2]}
+    inputs = {"cpi_1": fetcher(code1, "cpi"), "fx_1": fetcher(code1, "fx"),
+              "cpi_2": fetcher(code2, "cpi"), "fx_2": fetcher(code2, "fx")}
+    start, end, basis = sample_window(inputs, request["window"], request["custom_start"],
+                                     request["custom_end"], current_month)
+    return {"country_1": country1, "country_2": country2, "inputs": inputs,
+            "start": start, "end": end, "basis": basis,
+            "rows": calculate_sample(country1, country2, inputs, start, end)}
 
 
 def calculate_sample(country_1, country_2, inputs, start, end):
@@ -289,10 +338,11 @@ def main():
     st.caption("SALAMANCA  /  AN EXCHANGE RATE OBSERVATORY")
     st.title("Two currencies. A real comparison.")
     st.write("Explore how exchange rates and consumer prices move together, with monthly data from the IMF.")
-    if st.sidebar.button("Refresh IMF data", width="stretch"):
+    refresh = st.sidebar.button("Refresh IMF data", width="stretch", key="refresh_imf")
+    if refresh:
         countries_cached.clear()
         series_cached.clear()
-    st.sidebar.caption("Monthly observations from January 1976, where available. Downloads are cached for one hour.")
+    st.sidebar.caption("Refresh re-downloads the last submitted comparison. Use Load comparison to apply new country or date choices. Data are cached for one hour.")
     try:
         with st.spinner("Reading IMF countries…"):
             metadata = countries_cached()
@@ -300,50 +350,65 @@ def main():
         st.error(str(exc))
         st.info("Country choices require IMF metadata. Refresh to retry; no substitute data are displayed.")
         return
-    countries = metadata["countries"]
-    codes = sorted(countries, key=lambda code: countries[code].casefold())
-    col1, col2 = st.columns(2)
-    code1 = col1.selectbox("Country 1", codes, index=codes.index("GBR"),
-                           format_func=lambda c: countries[c], key="country_1")
-    code2 = col2.selectbox("Country 2", codes, index=codes.index("USA"),
-                           format_func=lambda c: countries[c], key="country_2")
-    country1 = {"code": code1, "name": countries[code1]}
-    country2 = {"code": code2, "name": countries[code2]}
-    try:
-        with st.spinner("Downloading monthly CPI and exchange rates from IMF…"):
-            inputs = {"cpi_1": series_cached(code1, "cpi"), "fx_1": series_cached(code1, "fx"),
-                      "cpi_2": series_cached(code2, "cpi"), "fx_2": series_cached(code2, "fx")}
-    except DataError as exc:
-        st.error(str(exc))
-        st.info("This request did not complete. Refresh to retry or choose another country pair.")
-        return
-
+    # Also filter previously cached metadata when upgrading an existing session.
+    countries = {code: name for code, name in metadata["countries"].items() if code not in REGIONAL_CODES}
     current_month = datetime.now(timezone.utc).strftime("%Y-%m")
     possible = month_range(FIRST_MONTH, current_month)
-    valid_sets = [{m for m, r in s["records"].items() if positive(r["value"]) and m in possible}
-                  for s in inputs.values()]
-    overlap = set.intersection(*valid_sets)
-    available = set.union(*valid_sets)
-    default_end = max(overlap or available or {current_month})
-    # Ten calendar years ending at the latest overlapping observation.
-    default_start = possible[max(0, possible.index(default_end) - 119)]
-    pair = (code1, code2)
-    if st.session_state.get("sample_pair") != pair:
-        st.session_state["sample_start"] = max(default_start, min(overlap or available or {default_start}))
-        st.session_state["sample_end"] = default_end
-        st.session_state["sample_pair"] = pair
-    a, b = st.columns(2)
-    start = a.selectbox("Start month", possible, key="sample_start")
-    end = b.selectbox("End month", possible, key="sample_end")
-    if start > end:
-        st.error("Start month must be at or before end month.")
+    default_start = possible[max(0, len(possible) - 360)]
+    codes = sorted(countries, key=lambda code: country_label(code, countries).casefold())
+    with st.form("comparison_controls"):
+        col1, col2 = st.columns(2)
+        code1 = col1.selectbox("Country 1", codes, index=codes.index("GBR"),
+                              format_func=lambda c: country_label(c, countries), key="country_1")
+        code2 = col2.selectbox("Country 2", codes, index=codes.index("USA"),
+                              format_func=lambda c: country_label(c, countries), key="country_2")
+        window = st.selectbox("Sample window", list(WINDOWS), key="sample_window")
+        st.caption("Automatic windows end at the latest month with shared valid data. The 30-year default uses all available history when it is shorter. Gaps stay visible.")
+        with st.expander("Custom dates · used only when Custom dates is selected"):
+            sy, sm, ey, em = st.columns(4)
+            start_year = sy.number_input("Start year", min_value=1976, max_value=int(current_month[:4]),
+                                         value=int(default_start[:4]), step=1, key="start_year")
+            start_month = sm.selectbox("Start month", range(1, 13), index=int(default_start[5:]) - 1,
+                                        format_func=lambda m: MONTH_NAMES[m - 1], key="start_month")
+            end_year = ey.number_input("End year", min_value=1976, max_value=int(current_month[:4]),
+                                       value=int(current_month[:4]), step=1, key="end_year")
+            end_month = em.selectbox("End month", range(1, 13), index=int(current_month[5:]) - 1,
+                                      format_func=lambda m: MONTH_NAMES[m - 1], key="end_month")
+        submitted = st.form_submit_button("Load comparison", type="primary")
+    request = {"country_1": code1, "country_2": code2, "window": window,
+               "custom_start": f"{start_year:04d}-{start_month:02d}",
+               "custom_end": f"{end_year:04d}-{end_month:02d}"}
+    if submitted:
+        st.session_state["comparison_request"] = request
+    if submitted or (refresh and st.session_state.get("comparison_request")):
+        request = st.session_state["comparison_request"]
+        st.session_state.pop("loaded_comparison", None)
+        st.session_state.pop("comparison_error", None)
+        try:
+            if WINDOWS[request["window"]] == "custom":
+                sample_window({}, request["window"], request["custom_start"], request["custom_end"], current_month)
+            with st.spinner("Loading monthly IMF CPI and exchange rates…"):
+                st.session_state["loaded_comparison"] = load_comparison(request, countries, series_cached, current_month)
+        except DataError as exc:
+            st.session_state["comparison_error"] = str(exc)
+    if st.session_state.get("comparison_error"):
+        st.error(st.session_state["comparison_error"])
+        st.info("Correct the selection and click Load comparison, or use Refresh IMF data to retry the last submitted request.")
         return
-    rows = calculate_sample(country1, country2, inputs, start, end)
+    loaded = st.session_state.get("loaded_comparison")
+    if loaded is None:
+        st.info("Choose two countries and a sample window, then click Load comparison.")
+        return
+    country1, country2 = loaded["country_1"], loaded["country_2"]
+    code1, code2 = country1["code"], country2["code"]
+    pair = (code1, code2)
+    inputs, start, end, rows = loaded["inputs"], loaded["start"], loaded["end"], loaded["rows"]
     valid_count = sum(row["valid_rer"] for row in rows)
     nominal_count = sum(row["nominal_s"] is not None for row in rows)
     mean = rows[0]["sample_mean_rer"]
     units = f"{currency_label(code2)} per {currency_label(code1)}"
-    st.caption(f"{countries[code1]} → {countries[code2]} · Nominal direction: {units}")
+    st.subheader(f"{country_label(code1, countries)} → {country_label(code2, countries)}")
+    st.caption(f"Loaded sample: {start} to {end} · {loaded['basis']} · Nominal direction: {units}. Selection edits apply only when you click Load comparison.")
     if "G163" in pair:
         st.info("Euro area prices use IMF's HICP (harmonized consumer price index). The national CPI key has no Euro area observations. No earlier euro history is invented.")
     if code1 not in ("GBR", "USA", "G163") or code2 not in ("GBR", "USA", "G163"):

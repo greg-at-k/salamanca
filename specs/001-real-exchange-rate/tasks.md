@@ -18,3 +18,13 @@ Check items only when the corresponding work has been completed and verified.
 - [ ] Deploy with Streamlit Python 3.12. Requires dashboard access; no browser surface is available in this session.
 - [ ] Verify the deployed application and add its public URLs to submission evidence.
 - [ ] User performs final manual verification and retains prompt/model/date evidence.
+
+## Follow-up: euro report and selection workflow
+
+- [x] Check Euro area/U.S. with live IMF data; actual G163 downloads work in this environment.
+- [x] Remove three-letter regions, including misleading Europe (EUR), and clarify the G163 label.
+- [x] Specify and implement a 30-year maximum automatic window plus shorter/full-history presets.
+- [x] Replace long month lists with custom year/month inputs.
+- [x] Batch selection changes behind Load comparison; keep explicit data refresh separate.
+- [x] Run 29 regression checks and verify the full revised Euro area/U.S. flow with live data.
+- [ ] Verify the exact failure in the user's deployed app if it persists; deployment URL/error has not been provided.

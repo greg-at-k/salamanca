@@ -8,7 +8,7 @@ Live keyless requests succeeded against the assignment's SDMX 3.0 base. Data req
 
 The server returns months such as `2024-M01`. The CPI response identifies dataflow version 5.0.0; ER identifies 4.0.1. Use `+` to request the current version and export the actual response's structure identifier.
 
-Country metadata is available at `/structure/codelist/IMF/CL_COUNTRY/+` with `Accept: application/json`. This succeeds where shortened version-specific metadata media types fail. Keep three-letter alphabetic country codes plus G163; exclude other regional aggregates. Country inclusion does not guarantee data availability.
+Country metadata is available at `/structure/codelist/IMF/CL_COUNTRY/+` with `Accept: application/json`. This succeeds where shortened version-specific metadata media types fail. Keep country codes plus G163; explicitly exclude the three-letter regional codes AFR, APD, EUR, MCD, WHD, and SDS in addition to other regional aggregates. EUR is the Europe aggregate, not the Euro area. Country inclusion does not guarantee data availability.
 
 G163.CPI._T.IX.M returns an empty dataset. G163.HICP._T.IX.M returns the Euro area harmonized consumer price index. Use that explicit key for G163, label HICP in the UI and export, and document the distinction. Do not silently substitute HICP for other countries.
 
@@ -32,11 +32,11 @@ Keep all runtime code in root `app.py` to meet the three-file deployment require
 - Requests: finite connect/read timeouts and at most two retries for transient transport errors, 429, and 5xx. Do not retry ordinary 4xx. Empty data is distinct from transport failure.
 - Standard-library CSV parsing: validate expected dimensions, frequency, country and month; reject duplicate months; preserve original observation strings and attributes. Honor SCALE when deriving numeric inputs and retain raw inputs alongside scaled values.
 - Pure calculation: align a full selected monthly calendar, validate finite positive inputs, compute nominal values independently of CPI, and calculate the real normalization solely within the selected sample. Handle arithmetic overflow as invalid data.
-- Streamlit: cached country metadata for 24 hours, cached series for one hour, explicit refresh, two country selectors, month selectors, chart mode radio buttons, coverage summary, methodology, data preview, CSV download.
+- Streamlit: cached country metadata for 24 hours, cached series for one hour. A form batches both countries, a sample-window preset, and custom year/month controls behind Load comparison. Default to the latest shared coverage capped at 360 calendar months; also offer 10 years, 5 years, full history, and custom dates. Keep an explicitly labeled loaded snapshot separate from draft fields. Chart mode applies immediately to that snapshot. Refresh explicitly clears caches and reloads the last submitted request.
 - Plotly: interactive lines, no gap connection, actual nominal units, optional secondary axis for Both, and a sample-average reference line for Real.
 - CSV: one row per selected month, raw source observations and attributes, arithmetic inputs, calculations, source keys/versions, and retrieval timestamps.
 
-Do not display stale results for new country/date controls. Fetch a country's full available history once, then filter and normalize on date changes. A failed request remains an error rather than becoming an empty or fabricated series. UI can still display/export available nominal inputs when CPI is genuinely empty.
+Never present loaded results as though they belong to unsubmitted controls. Fetch full country history only on a submitted load or explicit refresh; use cached series when available. Filter and normalize against the submitted dates. Clear the loaded snapshot on a failed submission so old charts cannot be mistaken for a successful new load. A failed request remains an error rather than becoming an empty or fabricated series. UI can still display/export available nominal inputs when CPI is genuinely empty.
 
 ## Validation
 

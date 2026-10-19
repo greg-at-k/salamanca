@@ -6,7 +6,7 @@ Named after the School of Salamanca, whose sixteenth-century scholars and theolo
 
 ## Status
 
-Implemented; 22 automated calculation, parsing, transport, chart, and Streamlit interaction checks pass with Python 3.12.15. Live IMF downloads were verified on 2026-10-19. Public Streamlit deployment and visual browser review remain pending.
+Implemented; 29 automated calculation, parsing, transport, chart, and Streamlit interaction checks pass with Python 3.12.15. Live IMF downloads were verified on 2026-10-19. The public deployment URL and visual browser review have not been verified in this session.
 
 Public repository: [greg-at-k/salamanca](https://github.com/greg-at-k/salamanca), branch `main`. The name replaces the assignment's example name.
 
@@ -30,6 +30,14 @@ python -m streamlit run app.py
 
 No API key was required in the verified requests. Data are cached for one hour; country metadata for 24 hours. Use **Refresh IMF data** to request updated observations or retry. IMF availability and access policies can change.
 
+## Choose and load a comparison
+
+Select both countries and a sample window, then click **Load comparison**. Changing selections does not download or recalculate results until you submit. The results always identify the loaded pair and dates. Chart modes still switch immediately.
+
+The default uses the latest shared valid observations over **up to 30 calendar years** (360 months). If shared history is shorter, it uses that history. Other choices are 10 years, 5 years, full available history, or custom dates. Custom dates use year and month inputs. If no complete real observations exist, automatic windows use shared nominal coverage, then available source coverage, with the limitation labeled.
+
+Thirty years is a practical default window, not an equilibrium benchmark. RER* is always the average within the actual selected sample. To force a new source download, use **Refresh IMF data**; it reloads the last submitted comparison rather than applying unfinished edits.
+
 ## Economics
 
 E1 and E2 are each country's local-currency units per USD; P1 and P2 are monthly price indices:
@@ -51,7 +59,7 @@ RER* is a descriptive sample average, not an estimated equilibrium or measured P
 
 The [IMF API page](https://data.imf.org/en/Resource-Pages/IMF-API) describes its SDMX APIs. The base used here is `https://api.imf.org/external/sdmx/3.0`.
 
-- Countries: `/structure/codelist/IMF/CL_COUNTRY/+`, JSON metadata; three-letter country codes plus G163 (Euro area).
+- Countries: `/structure/codelist/IMF/CL_COUNTRY/+`, JSON metadata; country codes plus G163 (Euro area). IMF's three-letter regional codes AFR, APD, EUR, MCD, WHD, and SDS are excluded. G163 is shown as **Euro area (euro / EUR)**; the separate Europe (EUR) aggregate is not the euro currency area.
 - National CPI: `/data/dataflow/IMF.STA/CPI/+/{ISO3}.CPI._T.IX.M`.
 - Period-average FX: `/data/dataflow/IMF.STA/ER/+/{ISO3}.XDC_USD.PA_RT.M`.
 - Euro area prices: `/data/dataflow/IMF.STA/CPI/+/G163.HICP._T.IX.M`.

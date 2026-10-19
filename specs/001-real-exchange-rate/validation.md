@@ -30,3 +30,15 @@ The public GitHub repository was created and pushed to main: https://github.com/
 The browser-control inventory returned no available browsers or apps, so no visual screenshot review was possible. Streamlit AppTest verifies app execution and widget interactions, but does not replace visual inspection or testing the public deployment.
 
 No public Streamlit URL is established by this record.
+
+## Euro report and selection improvements
+
+Follow-up on 2026-10-19: the reported failure for euro against USD was not reproduced with the actual G163 Euro area series. Live UK/Euro area, Euro area/U.S., and Euro area/Euro area calculations succeeded. Inspection did reveal that the initial country filter admitted six three-letter IMF regions, including Europe (EUR), which is not the Euro area. Those regions are now excluded, including from older cached metadata, and G163 is labeled Euro area (euro / EUR). This fixes a verified menu defect; it does not establish the exact cause of the user's reported failure.
+
+The revised specification adds an explicit Load comparison form, a shared-data default capped at 360 calendar months, shorter/full-history presets, and custom year/month controls. Refresh re-downloads only the last submitted request, while chart-mode changes act immediately on the loaded snapshot.
+
+`python -m unittest discover -v`: **29 checks passed** with Python 3.12.15. New checks cover the 360-month cap, shorter Euro history, preset windows, custom date validation, no price/FX downloads before submission, draft selection behavior, and explicit refresh behavior.
+
+The complete revised app was then exercised with live G163/U.S. downloads, the Load comparison action, and all three chart modes. It selected December 1999-August 2026 (321 months, 320 valid real months), and the exported real index averaged 100 within 1e-8. Country choices now total 260 after excluding the six regions. See [euro-usd-smoke.json](../../evidence/euro-usd-smoke.json) and the [Euro area/U.S. CSV](../../evidence/salamanca_G163_USA_latest.csv).
+
+Browser inventory remained empty, so visual inspection and verification of the user's actual deployed app remain outstanding.

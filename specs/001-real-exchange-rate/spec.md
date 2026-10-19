@@ -24,7 +24,9 @@ Help a student explore nominal and real bilateral exchange rates, understand the
 4. Read the calculation and units, then download the selected sample as CSV.
 5. Change dates and see the real index recomputed against the new sample mean.
 
-Initial defaults: United Kingdom as Country 1, United States as Country 2; Both chart mode; most recent ten years of available overlapping valid data, or all overlapping data if shorter. These defaults are implementation assumptions and may be revised without changing the economics.
+Initial defaults: United Kingdom as Country 1, United States as Country 2; Both chart mode; most recent 30 calendar years of available overlapping valid data (at most 360 months), or all overlapping history if shorter. Automatic windows end at the latest shared valid month. This is a convenient sample choice, not an economic equilibrium benchmark. RER* remains the selected sample's arithmetic average.
+
+Load price/FX data and calculate results only after the user clicks Load comparison. Provide 30-year, 10-year, 5-year, full-history, and custom-date windows. Custom dates use separate year and month inputs rather than a long list starting in 1976. Draft changes leave the explicitly labeled loaded comparison in place until submission. Chart-mode changes apply immediately to the loaded comparison. Refresh IMF data explicitly re-downloads the last submitted request, ignoring draft edits.
 
 ## Data contract
 
@@ -36,6 +38,7 @@ Initial defaults: United Kingdom as Country 1, United States as Country 2; Both 
 - Euro area country code: `G163`.
 - Live UK/U.S. CPI and FX responses, Euro area HICP/FX, country labels, keyless access, and response formats were verified on 2026-10-19. See plan.md for request details and observed coverage.
 - Populate country choices from IMF metadata; do not promise every country has both required series.
+- Exclude IMF regional codes AFR, APD, EUR, MCD, WHD, and SDS as well as other regional aggregates. In particular, EUR is Europe, not the euro currency area. Label G163 as Euro area (euro / EUR) to make the choice clear.
 - Preserve observed values and relevant source flags. Reject ambiguous duplicate country/month observations rather than silently averaging them.
 - Align observations by calendar month and retain every month within the selected interval, including months with missing inputs.
 - Do not interpolate, carry forward, synthesize history, or substitute another provider or annual data. In particular, do not invent pre-euro observations. Display provider-supplied historical coverage and any relevant metadata.
@@ -132,6 +135,10 @@ These checks are requirements, not claims of completed testing.
 | A12 | Inspect Euro area coverage | G163 selected; no app-generated pre-euro backfill |
 | A13 | Manually recompute one live-data CSV row | FX direction, RER, and real index reproduce exported values within floating-point tolerance |
 | A14 | Deploy with Python 3.12 | App starts; country/date controls, every chart mode, and CSV download work online |
+| A15 | Use the default automatic window | Latest shared valid month is the end; start is no earlier than shared coverage and at most 359 months before the end; shorter histories use all shared coverage |
+| A16 | Edit countries/dates before Load comparison | No price/FX fetch or recalculation until submission; loaded results keep their own explicit countries/dates |
+| A17 | Select custom months and refresh | Year/month inputs apply on Load; invalid ranges fail before fetching; Refresh reloads only the last submitted pair |
+| A18 | Search euro in the country menu | G163 is clearly labeled Euro area; the misleading Europe (EUR) regional aggregate is absent |
 
 ## Delivery and evidence
 

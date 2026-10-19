@@ -9,6 +9,8 @@ The excerpts below preserve the user's task direction. They do not replace full 
 1. Initial prompt excerpt: "I want to build this tool -- do you think it makes sense if we do spec driven development like [https://github.github.io/spec-kit/quickstart.html](https://github.github.io/spec-kit/quickstart.html) ?" The user also supplied the complete Real Exchange Rate app assignment in that message.
 2. Naming prompt: "great\n\nthe repo is going to be called salamanca in honor of the spanish monks that talked about this i think in 16th century"
 3. Continuation prompt: "ok keep going, what's the next step?"
+4. Follow-up prompt (paragraphs normalized): "doesn't work for the euro, i don't know why"; "also, the date selector is kind of annoying -- you have to scroll always starting from 1976 or so. is there any benchmark that we should use? say, always use the most data available with a max of 30 years?"; "also, would it make sense to have to click something like \"refresh\" or \"load\" or something after selecting country and date?"; "what do you think".
+5. Clarification: "i did it against the US dollar and the data for the euro is not loading i think".
 
 The initial prompt excerpt above normalizes whitespace and link formatting. The naming entry represents paragraph breaks with literal `\n` for readability. Preserve screenshots or a chat export for the complete original messages, assistant responses, model name, and date.
 
