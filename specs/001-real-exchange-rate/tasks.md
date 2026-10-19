@@ -28,3 +28,13 @@ Check items only when the corresponding work has been completed and verified.
 - [x] Batch selection changes behind Load comparison; keep explicit data refresh separate.
 - [x] Run 29 regression checks and verify the full revised Euro area/U.S. flow with live data.
 - [ ] Verify the exact failure in the user's deployed app if it persists; deployment URL/error has not been provided.
+
+## Follow-up: Real default and implied exchange rate
+
+- [x] Confirm the user's intended implied-versus-actual nominal-rate comparison.
+- [x] Make Real the initial chart-mode selection.
+- [x] Specify and calculate S* = RER* × CPI2 / CPI1 with explicit sample-benchmark interpretation.
+- [x] Add an independent comparison chart on a common currency-unit axis.
+- [x] Include implied_s in CSV exports and the observation preview.
+- [x] Pass 32 regression checks and an independent Decimal verification.
+- [x] Verify the complete two-chart view with live UK/U.S. and Euro area/U.S. data.

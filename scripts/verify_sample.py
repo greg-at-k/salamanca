@@ -28,8 +28,10 @@ def main():
             rers.append((e2 / e1) * p1 / p2)
         benchmark = sum(rers) / len(rers)
         january_index = 100 * rers[0] / benchmark
+        january_implied = benchmark * Decimal(exported[0]["cpi_2_raw_obs"]) / Decimal(exported[0]["cpi_1_raw_obs"])
         assert abs(Decimal(exported[0]["rer"]) - rers[0]) < Decimal("1e-12")
         assert abs(Decimal(exported[0]["real_index"]) - january_index) < Decimal("1e-10")
+        assert abs(Decimal(exported[0]["implied_s"]) - january_implied) < Decimal("1e-12")
         index_mean = sum(Decimal(r["real_index"]) for r in exported) / len(exported)
         assert abs(index_mean - 100) < Decimal("1e-8")
         row = exported[0]
@@ -62,9 +64,12 @@ RER* = (RER(January) + RER(February) + RER(March)) / 3
 January real index = 100 * RER(January) / RER*
                    = {january_index:.15f}
 Mean of the three exported real indices = {index_mean:.15f}
+January implied S* = RER* * P2 / P1 = {january_implied:.15f} USD per GBP
 ```
 
 The nominal direction is USD per GBP. The three-month real index averages 100 within numerical tolerance. If only January is selected, RER* becomes January's RER and January's real index becomes 100; its nominal S does not change.
+
+The implied rate uses the same currency units as actual S and holds RER at the selected sample's mean. It is a descriptive benchmark, not estimated fair value. For a one-valid-month sample, that month's implied and actual rates coincide.
 
 CSV: [salamanca_GBR_USA_2024-01_2024-03.csv](salamanca_GBR_USA_2024-01_2024-03.csv).
 

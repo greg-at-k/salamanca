@@ -27,9 +27,12 @@ RER* = (RER(January) + RER(February) + RER(March)) / 3
 January real index = 100 * RER(January) / RER*
                    = 100.147861528584972
 Mean of the three exported real indices = 100.000000000000003
+January implied S* = RER* * P2 / P1 = 1.267953755623755 USD per GBP
 ```
 
 The nominal direction is USD per GBP. The three-month real index averages 100 within numerical tolerance. If only January is selected, RER* becomes January's RER and January's real index becomes 100; its nominal S does not change.
+
+The implied rate uses the same currency units as actual S and holds RER at the selected sample's mean. It is a descriptive benchmark, not estimated fair value. For a one-valid-month sample, that month's implied and actual rates coincide.
 
 CSV: [salamanca_GBR_USA_2024-01_2024-03.csv](salamanca_GBR_USA_2024-01_2024-03.csv).
 

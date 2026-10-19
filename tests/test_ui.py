@@ -60,6 +60,7 @@ class StreamlitTests(unittest.TestCase):
 
     def test_default_pair_dates_modes_and_download(self):
         at = self.create_app()
+        self.assertEqual(at.radio(key="chart_mode").value, "Real")
         self.assertEqual(at.selectbox(key="country_1").value, "GBR")
         self.assertEqual(at.selectbox(key="country_2").value, "USA")
         self.assertEqual(at.selectbox(key="sample_window").value, "Up to 30 years (recommended)")
@@ -69,7 +70,7 @@ class StreamlitTests(unittest.TestCase):
         for mode in ("Real", "Nominal", "Both"):
             at.radio(key="chart_mode").set_value(mode).run()
             self.assertFalse(at.exception)
-            self.assertEqual(len(at.get("plotly_chart")), 1)
+            self.assertEqual(len(at.get("plotly_chart")), 2)
             self.assertEqual(at.metric[1].value, "3 / 3")
         self.custom_dates(at, "2024-02", "2024-03")
         self.assertEqual(at.metric[1].value, "2 / 2")
@@ -108,8 +109,11 @@ class StreamlitTests(unittest.TestCase):
         self.series_mock.side_effect = no_cpi
         at = self.create_app()
         self.assertIn("No months", at.warning[0].value)
-        self.assertEqual(len(at.get("plotly_chart")), 1)
+        self.assertEqual(at.radio(key="chart_mode").value, "Real")
+        self.assertEqual(len(at.get("plotly_chart")), 0)
         self.assertEqual(len(at.get("download_button")), 1)
+        at.radio(key="chart_mode").set_value("Nominal").run()
+        self.assertEqual(len(at.get("plotly_chart")), 1)
         at.radio(key="chart_mode").set_value("Real").run()
         self.assertEqual(len(at.get("plotly_chart")), 0)
 

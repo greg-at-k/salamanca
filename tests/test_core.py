@@ -28,6 +28,30 @@ class CalculationTests(unittest.TestCase):
         self.assertEqual(rows[0]["sample_mean_rer"], 1.5)
         self.assertEqual(rows[0]["real_index"], 100)
         self.assertEqual(rows[0]["nominal_s"], 1.25)
+        self.assertEqual(rows[0]["implied_s"], 1.25)
+
+    def test_implied_rate_matches_real_benchmark_and_currency_direction(self):
+        rows = app.calculate_sample(UK, US, synthetic_inputs(), "2024-01", "2024-02")
+        self.assertAlmostEqual(rows[0]["implied_s"], 1.75 * 100 / 120)
+        self.assertAlmostEqual(rows[1]["implied_s"], 1.75)
+        for row in rows:
+            self.assertAlmostEqual(row["implied_s"] * row["cpi_1"] / row["cpi_2"], row["sample_mean_rer"])
+            self.assertAlmostEqual(row["nominal_s"] / row["implied_s"], row["real_index"] / 100)
+        exported = list(csv.DictReader(io.StringIO(app.export_csv(rows).decode())))
+        self.assertAlmostEqual(float(exported[0]["implied_s"]), rows[0]["implied_s"])
+
+    def test_implied_rate_needs_prices_and_benchmark_but_not_monthly_fx(self):
+        inputs = synthetic_inputs()
+        inputs["fx_1"]["records"].pop("2024-02")
+        rows = app.calculate_sample(UK, US, inputs, "2024-01", "2024-02")
+        self.assertIsNone(rows[1]["nominal_s"])
+        self.assertAlmostEqual(rows[1]["implied_s"], 1.5)
+        inputs["cpi_1"]["records"].pop("2024-02")
+        rows = app.calculate_sample(UK, US, inputs, "2024-01", "2024-02")
+        self.assertIsNone(rows[1]["implied_s"])
+        inputs["fx_1"]["records"].clear()
+        rows = app.calculate_sample(UK, US, inputs, "2024-01", "2024-02")
+        self.assertTrue(all(row["implied_s"] is None for row in rows))
 
     def test_missing_cpi_retains_nominal_and_calendar(self):
         inputs = synthetic_inputs()
@@ -242,6 +266,21 @@ class TransportTests(unittest.TestCase):
 
 
 class ChartTests(unittest.TestCase):
+    def test_actual_and_implied_chart_uses_same_units_axis_and_preserves_gaps(self):
+        inputs = synthetic_inputs()
+        inputs["cpi_1"]["records"].pop("2024-02")
+        rows = app.calculate_sample(UK, US, inputs, "2024-01", "2024-03")
+        figure = app.build_implied_chart(rows, "USD per GBP")
+        self.assertEqual(len(figure.data), 2)
+        self.assertEqual(figure.layout.yaxis.title.text, "USD per GBP")
+        self.assertEqual(figure.data[0].yaxis, figure.data[1].yaxis)
+        self.assertFalse(figure.data[0].connectgaps)
+        self.assertFalse(figure.data[1].connectgaps)
+        self.assertEqual(figure.data[0].y[0], 1.25)
+        self.assertAlmostEqual(figure.data[1].y[0], 1.25)
+        self.assertIsNone(figure.data[1].y[1])
+        self.assertEqual(figure.data[1].line.dash, "dash")
+
     def test_modes_axes_units_and_gaps(self):
         inputs = synthetic_inputs()
         inputs["cpi_1"]["records"].pop("2024-02")

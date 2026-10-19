@@ -24,7 +24,7 @@ Help a student explore nominal and real bilateral exchange rates, understand the
 4. Read the calculation and units, then download the selected sample as CSV.
 5. Change dates and see the real index recomputed against the new sample mean.
 
-Initial defaults: United Kingdom as Country 1, United States as Country 2; Both chart mode; most recent 30 calendar years of available overlapping valid data (at most 360 months), or all overlapping history if shorter. Automatic windows end at the latest shared valid month. This is a convenient sample choice, not an economic equilibrium benchmark. RER* remains the selected sample's arithmetic average.
+Initial defaults: United Kingdom as Country 1, United States as Country 2; Real chart mode; most recent 30 calendar years of available overlapping valid data (at most 360 months), or all overlapping history if shorter. Automatic windows end at the latest shared valid month. This is a convenient sample choice, not an economic equilibrium benchmark. RER* remains the selected sample's arithmetic average.
 
 Load price/FX data and calculate results only after the user clicks Load comparison. Provide 30-year, 10-year, 5-year, full-history, and custom-date windows. Custom dates use separate year and month inputs rather than a long list starting in 1976. Draft changes leave the explicitly labeled loaded comparison in place until submission. Chart-mode changes apply immediately to the loaded comparison. Refresh IMF data explicitly re-downloads the last submitted request, ignoring draft edits.
 
@@ -61,6 +61,7 @@ RER(t) = S(t) * P1(t) / P2(t)
 V = months inside the inclusive selected interval with all four inputs finite and positive
 RER* = sum(RER(t) for t in V) / count(V)
 Real Index(t) = 100 * RER(t) / RER* for t in V
+Implied S*(t) = RER* * P2(t) / P1(t)
 ```
 
 - Compute nominal S when both FX inputs are finite and positive, even when CPI is missing.
@@ -70,6 +71,8 @@ Real Index(t) = 100 * RER(t) / RER* for t in V
 - If V is empty, show that no valid real observations are available; do not divide by zero. Retain nominal observations and allow a CSV of the available inputs.
 - A one-valid-month sample has a real index of 100 and is labeled as a one-month sample.
 - Allow the same country in both positions; wherever inputs are valid, S = 1, RER = 1, and Real Index = 100.
+- Compute implied S* wherever both monthly price indices are finite and positive and the selected-sample RER* exists. The month's actual FX inputs need not be present; preserve gaps in actual S independently. Leave implied S* blank when its inputs are invalid or its result is nonfinite/nonpositive.
+- Implied S* has the same Country 2 currency per Country 1 unit direction as actual S. It is the nominal rate holding RER at RER*. On valid real months, S/S* = Real Index/100. It is not an estimate of fair value or equilibrium.
 
 ## Interpretation
 
@@ -90,6 +93,9 @@ Real Index(t) = 100 * RER(t) / RER* for t in V
 - Preserve gaps in plotted series rather than drawing across missing observations.
 - Changing chart mode does not change calculations, the sample, or exported content.
 - Display the selected-sample RER*, valid month count, and data-coverage information.
+- Default to Real on first render, preserving the user's subsequent chart-mode choices.
+- Below the existing chart, always provide a separate Actual and implied exchange rates comparison when implied observations exist. Plot actual S and implied S* on a single common currency-unit axis, with distinguishable solid/dashed lines and tooltips. The first chart's Real/Nominal/Both setting does not change this comparison.
+- Identify the second plot as sample-average-implied; explain that its benchmark changes with the loaded dates. Provide an unavailable state when there is no valid sample benchmark or price pair. Include the implied rate in the data preview and CSV.
 
 ## CSV contract
 
@@ -105,6 +111,7 @@ Export one row per calendar month in the selected inclusive interval, in ascendi
 | fx_1_lcu_per_usd, fx_2_lcu_per_usd | FX inputs used |
 | fx_1_origin, fx_2_origin | IMF series or USD identity |
 | nominal_s | E2 / E1 |
+| implied_s | RER* * CPI2 / CPI1, in the same currency units as nominal_s |
 | rer | S * CPI1 / CPI2 |
 | sample_mean_rer | RER* repeated on each row, blank if unavailable |
 | real_index | 100 * RER / RER* |
@@ -139,6 +146,9 @@ These checks are requirements, not claims of completed testing.
 | A16 | Edit countries/dates before Load comparison | No price/FX fetch or recalculation until submission; loaded results keep their own explicit countries/dates |
 | A17 | Select custom months and refresh | Year/month inputs apply on Load; invalid ranges fail before fetching; Refresh reloads only the last submitted pair |
 | A18 | Search euro in the country menu | G163 is clearly labeled Euro area; the misleading Europe (EUR) regional aggregate is absent |
+| A19 | Open a fresh loaded comparison | Real is initially selected; later mode selections persist during interaction |
+| A20 | Compare actual and implied rates | Both are on one currency-unit axis; implied S* holds RER at RER*; S/S* equals Real Index/100 for valid real months; dates recalculate S*; CSV includes implied_s |
+| A21 | Missing FX, missing CPI, or no benchmark | Implied S* may exist with valid prices despite missing monthly FX; missing prices or absent RER* leave S* blank; neither chart connects across its missing observations |
 
 ## Delivery and evidence
 

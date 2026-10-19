@@ -6,7 +6,7 @@ Named after the School of Salamanca, whose sixteenth-century scholars and theolo
 
 ## Status
 
-Implemented; 29 automated calculation, parsing, transport, chart, and Streamlit interaction checks pass with Python 3.12.15. Live IMF downloads were verified on 2026-10-19. The public deployment URL and visual browser review have not been verified in this session.
+Implemented; 32 automated calculation, parsing, transport, chart, and Streamlit interaction checks pass with Python 3.12.15. Live IMF downloads were verified on 2026-10-19. The public deployment URL and visual browser review have not been verified in this session.
 
 Public repository: [greg-at-k/salamanca](https://github.com/greg-at-k/salamanca), branch `main`. The name replaces the assignment's example name.
 
@@ -32,7 +32,7 @@ No API key was required in the verified requests. Data are cached for one hour; 
 
 ## Choose and load a comparison
 
-Select both countries and a sample window, then click **Load comparison**. Changing selections does not download or recalculate results until you submit. The results always identify the loaded pair and dates. Chart modes still switch immediately.
+Select both countries and a sample window, then click **Load comparison**. Changing selections does not download or recalculate results until you submit. The results always identify the loaded pair and dates. The initial chart mode is **Real**; chart modes still switch immediately.
 
 The default uses the latest shared valid observations over **up to 30 calendar years** (360 months). If shared history is shorter, it uses that history. Other choices are 10 years, 5 years, full available history, or custom dates. Custom dates use year and month inputs. If no complete real observations exist, automatic windows use shared nominal coverage, then available source coverage, with the limitation labeled.
 
@@ -47,11 +47,14 @@ S(t) = E2(t) / E1(t)              # Country 2 currency per Country 1 currency
 RER(t) = S(t) * P1(t) / P2(t)
 RER* = arithmetic mean of valid RER(t) in the selected sample
 Real Index(t) = 100 * RER(t) / RER*
+Implied S*(t) = RER* * P2(t) / P1(t)
 ```
 
 UK as Country 1 and U.S. as Country 2 gives **USD per GBP**. An increase in this RER convention represents real appreciation of Country 1 relative to Country 2.
 
 The real index averages 100 over valid months in the selected sample. Changing dates recalculates RER*. Nominal S retains actual currency units. Both mode uses separate axes.
+
+The additional **Actual and implied exchange rates** chart compares observed nominal S with sample-average-implied S* on one common currency-unit axis. S* is the nominal rate that would keep RER equal to the selected sample's mean. For valid real months, `S / S* = Real Index / 100`. Changing the sample changes its benchmark. Both monthly price indices and a valid sample benchmark are required; S* can still be computed when that month's actual FX is missing. Each line preserves its own missing-data gaps. The second chart is independent of the first chart's mode selector.
 
 RER* is a descriptive sample average, not an estimated equilibrium or measured PPP exchange rate. CPI indices can have different base years, so raw RER levels do not establish absolute price levels. Constant rebasing cancels in the normalized index; historical breaks can still affect comparisons. The app does not label currencies overvalued or undervalued.
 
@@ -77,7 +80,7 @@ See the [live response manifest](evidence/imf/manifest.json) and in-app coverage
 
 ## CSV export
 
-One row per selected month, regardless of chart mode, includes countries, currencies, sample boundaries, CPI/HICP and FX inputs, nominal S, RER, sample RER*, real index, validity, and missing-input reasons. It also includes original observation strings, scale, source attributes, keys, URLs, origin, and UTC retrieval timestamps. Actual dataflow versions are in source attributes.
+One row per selected month, regardless of chart mode, includes countries, currencies, sample boundaries, CPI/HICP and FX inputs, nominal S, implied S* (`implied_s`), RER, sample RER*, real index, validity, and missing-input reasons. It also includes original observation strings, scale, source attributes, keys, URLs, origin, and UTC retrieval timestamps. Actual dataflow versions are in source attributes.
 
 Calculations use full numeric precision. Display rounding is not applied to exported values. Missing numbers are blank, never zero.
 

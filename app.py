@@ -272,6 +272,11 @@ def calculate_sample(country_1, country_2, inputs, start, end):
         mean = None
     for row in rows:
         row["sample_mean_rer"] = mean
+        row["implied_s"] = None
+        if mean is not None and positive(row["cpi_1"]) and positive(row["cpi_2"]):
+            implied = mean * (row["cpi_2"] / row["cpi_1"])
+            if positive(implied):
+                row["implied_s"] = implied
         if row["valid_rer"]:
             row["real_index"] = 100 * (row["rer"] / mean)
     return rows
@@ -318,6 +323,30 @@ def build_chart(rows, mode, nominal_units):
                       paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
                       font={"family": "Arial, sans-serif"}, dragmode="zoom")
     fig.update_xaxes(type="date", title_text="Month", showgrid=False)
+    return fig
+
+
+def build_implied_chart(rows, nominal_units):
+    """Compare observed and sample-average-implied nominal rates on one axis."""
+    import plotly.graph_objects as go
+
+    fig = go.Figure()
+    dates = [f"{row['month']}-01" for row in rows]
+    for name, field, color, dash in (
+        ("Actual exchange rate", "nominal_s", COLORS["nominal"], "solid"),
+        ("Sample-average-implied rate", "implied_s", COLORS["real"], "dash"),
+    ):
+        fig.add_trace(go.Scatter(
+            x=dates, y=[row[field] for row in rows], name=name,
+            mode="lines+markers" if len(rows) == 1 else "lines", connectgaps=False,
+            line={"color": color, "width": 2.5, "dash": dash},
+            hovertemplate=f"%{{x|%b %Y}}<br>{name}: %{{y:.6g}}<br>{nominal_units}<extra></extra>"))
+    fig.update_layout(height=400, margin={"l": 15, "r": 15, "t": 35, "b": 10},
+                      hovermode="x unified", legend={"orientation": "h", "y": 1.12, "x": 0},
+                      paper_bgcolor="rgba(0,0,0,0)", plot_bgcolor="rgba(0,0,0,0)",
+                      font={"family": "Arial, sans-serif"}, dragmode="zoom")
+    fig.update_xaxes(type="date", title_text="Month", showgrid=False)
+    fig.update_yaxes(title_text=nominal_units, zeroline=False)
     return fig
 
 
@@ -403,6 +432,10 @@ def main():
     code1, code2 = country1["code"], country2["code"]
     pair = (code1, code2)
     inputs, start, end, rows = loaded["inputs"], loaded["start"], loaded["end"], loaded["rows"]
+    if rows and "implied_s" not in rows[0]:
+        # Upgrade an existing loaded session using the same inputs/sample, without a download.
+        rows = calculate_sample(country1, country2, inputs, start, end)
+        loaded["rows"] = rows
     valid_count = sum(row["valid_rer"] for row in rows)
     nominal_count = sum(row["nominal_s"] is not None for row in rows)
     mean = rows[0]["sample_mean_rer"]
@@ -425,7 +458,7 @@ def main():
     elif valid_count < len(rows):
         st.warning(f"{len(rows) - valid_count} month(s) lack valid real inputs. They remain as gaps and are excluded from RER*.")
 
-    mode = st.radio("Chart", ["Real", "Nominal", "Both"], index=2, horizontal=True, key="chart_mode")
+    mode = st.radio("Chart", ["Real", "Nominal", "Both"], index=0, horizontal=True, key="chart_mode")
     if (mode == "Real" and valid_count) or (mode == "Nominal" and nominal_count) or (mode == "Both" and (valid_count or nominal_count)):
         st.plotly_chart(build_chart(rows, mode, units), width="stretch",
                         config={"displaylogo": False, "scrollZoom": False},
@@ -433,13 +466,22 @@ def main():
     else:
         st.info("No valid observations for this chart mode in the selected sample.")
     st.caption("The real index is relative to the selected sample's average. Changing the dates recalculates that average. Nominal rates stay in currency units.")
+    st.subheader("Actual and implied exchange rates")
+    st.caption(f"Both lines use {units}. The implied rate is the nominal exchange rate that would hold RER at the selected sample's average.")
+    if any(row["implied_s"] is not None for row in rows):
+        st.plotly_chart(build_implied_chart(rows, units), width="stretch",
+                        config={"displaylogo": False, "scrollZoom": False},
+                        key="implied_exchange_rate_chart")
+    else:
+        st.info("The implied rate needs a valid sample-average RER and both price indices. It is unavailable for this sample.")
+    st.caption("This sample-average-implied rate is not an estimated equilibrium or fair value. Changing the loaded dates changes its benchmark.")
     st.download_button("Download sample CSV", data=export_csv(rows), mime="text/csv",
                        file_name=f"salamanca_{code1}_{code2}_{start}_{end}.csv",
                        key="download_csv", type="primary")
 
     with st.expander("Observations and calculations", expanded=False):
         st.dataframe(pd.DataFrame(rows)[["month", "cpi_1", "cpi_2", "fx_1_lcu_per_usd",
-                                        "fx_2_lcu_per_usd", "nominal_s", "rer", "sample_mean_rer",
+                                        "fx_2_lcu_per_usd", "nominal_s", "implied_s", "rer", "sample_mean_rer",
                                         "real_index", "valid_rer", "missing_or_invalid_reason"]],
                      hide_index=True, width="stretch")
         st.caption("The CSV also includes original observation strings, scale, source attributes, series identifiers, and retrieval timestamps.")
@@ -467,6 +509,8 @@ def main():
     with st.expander("How to read this comparison"):
         st.latex(r"S_t=\frac{E_{2,t}}{E_{1,t}},\quad RER_t=S_t\frac{P_{1,t}}{P_{2,t}}")
         st.latex(r"RER^*=\frac{1}{N}\sum_{t\in V}RER_t,\quad I_t=100\frac{RER_t}{RER^*}")
+        st.latex(r"S_t^*=RER^*\frac{P_{2,t}}{P_{1,t}},\quad \frac{S_t}{S_t^*}=\frac{I_t}{100}")
+        st.write("The second chart compares actual S with implied S*, using the same currency direction and one common axis. S* is defined by holding RER at its selected-sample average. It is calculated where both price indices are valid and the sample benchmark exists, even if that month's actual exchange-rate observation is missing.")
         st.write("E is each country's domestic currency per USD; P is its monthly CPI (HICP for the Euro area). V contains only valid months within your selected dates. An increase in this RER convention represents real appreciation of Country 1 relative to Country 2.")
         st.write("RER* is a descriptive sample average, not an estimated equilibrium rate. CPI series can have different base years: raw RER levels do not establish absolute price levels. Constant CPI rebasing cancels in the real index, but historical breaks can still affect comparisons.")
         st.write("No interpolation or carry-forward is used. Missing months remain blank in the CSV. SCALE is applied to source observations; original values and attributes are retained. USD per USD may be derived as 1 only if the IMF USD series is absent, and is labeled as an identity.")

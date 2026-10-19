@@ -42,3 +42,13 @@ The revised specification adds an explicit Load comparison form, a shared-data d
 The complete revised app was then exercised with live G163/U.S. downloads, the Load comparison action, and all three chart modes. It selected December 1999-August 2026 (321 months, 320 valid real months), and the exported real index averaged 100 within 1e-8. Country choices now total 260 after excluding the six regions. See [euro-usd-smoke.json](../../evidence/euro-usd-smoke.json) and the [Euro area/U.S. CSV](../../evidence/salamanca_G163_USA_latest.csv).
 
 Browser inventory remained empty, so visual inspection and verification of the user's actual deployed app remain outstanding.
+
+## Real default and implied nominal rate
+
+Follow-up on 2026-10-19: the user confirmed that implied means S*(t) = RER* × CPI2(t) / CPI1(t), compared against actual nominal S in the same currency units. The main chart now initially selects Real. A separate second chart uses one common currency-unit axis for actual S and sample-average-implied S*. Its labels identify the descriptive sample benchmark and do not claim estimated fair value.
+
+`python -m unittest discover -v`: **32 checks passed** with Python 3.12.15. The added arithmetic checks establish that S* holds RER at its sample mean, S/S* equals Real Index/100 on valid real months, and S* remains computable with valid prices even when that month's FX is missing. Missing prices or an absent benchmark leave S* blank. Chart checks verify common units/axis, gaps, and distinguishable lines; Streamlit checks verify the Real default and two charts across all main chart modes.
+
+Independent Decimal verification also passed for the saved January-March 2024 UK/U.S. implied rate. The complete app was checked with live UK/U.S. and Euro area/U.S. data: both charts rendered through AppTest in Real, Nominal, and Both modes, with the actual/implied identity verified across every valid month. See [implied-rate-smoke.json](../../evidence/implied-rate-smoke.json). The example CSVs now include implied_s.
+
+Visual browser inspection and verification of the actual public deployment remain unperformed.

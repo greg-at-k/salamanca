@@ -1,0 +1,36 @@
+{
+  "date": "2026-10-19",
+  "python": "3.12.15",
+  "actual_live_imf_requests": true,
+  "initial_chart_mode": "Real",
+  "chart_modes_checked": [
+    "Real",
+    "Nominal",
+    "Both"
+  ],
+  "comparisons": [
+    {
+      "country_1": "GBR",
+      "country_2": "USA",
+      "units": "USD per GBP",
+      "start": "1996-09",
+      "end": "2026-08",
+      "valid_real_months": 359,
+      "implied_rate_months": 359,
+      "actual_over_implied_equals_index_over_100": true,
+      "charts": 2
+    },
+    {
+      "country_1": "G163",
+      "country_2": "USA",
+      "units": "USD per EUR",
+      "start": "1999-12",
+      "end": "2026-08",
+      "valid_real_months": 320,
+      "implied_rate_months": 320,
+      "actual_over_implied_equals_index_over_100": true,
+      "charts": 2
+    }
+  ],
+  "visual_browser_review": "Not performed: no browser surface available in session"
+}
